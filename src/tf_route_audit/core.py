@@ -81,6 +81,8 @@ def audit(rows, required=(), query=None, at_ns=None, declared_frames=()):
     findings = Findings()
     edges = defaultdict(list)
     frames = set(declared_frames)
+    if len(frames) > 10_000:
+        raise ValueError('Frame limit of 10,000 exceeded.')
     parents = defaultdict(set)
     for index, raw in enumerate(rows):
         if index >= 1_000_000:

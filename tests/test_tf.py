@@ -52,6 +52,17 @@ class TfTests(unittest.TestCase):
             self.assertEqual(len(report['components']),2)
             self.assertFalse(report['route']['time_window_passed'])
 
+    def test_urdf_only_declared_links_exceed_frame_limit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'robot.urdf'
+            links=''.join(f'<link name="frame_{index}"/>' for index in range(10_001))
+            path.write_text(f'<robot name="r">{links}</robot>',encoding='utf-8')
+            rows,declared=input_records(path)
+            self.assertEqual(rows,[])
+            self.assertEqual(len(declared),10_001)
+            with self.assertRaisesRegex(ValueError,'Frame limit of 10,000 exceeded'):
+                audit(rows,declared_frames=declared)
+
     def test_large_chain_avoids_recursion_depth(self):
         rows=[{'parent':str(x),'child':str(x+1),'static':True} for x in range(1500)]
         self.assertEqual(len(audit(rows,query=['0','1500'])['route']['frames']),1501)
